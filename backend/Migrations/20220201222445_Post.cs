@@ -1,26 +1,25 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace backend.Migrations
 {
-    public partial class Vote : Migration
+    public partial class Post : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<Guid>(
-                name: "UserFK",
+            migrationBuilder.AddColumn<int>(
+                name: "PostRating",
                 table: "Post",
-                type: "uuid",
+                type: "integer",
                 nullable: false,
-                defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
+                defaultValue: 0);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "UserFK",
+                name: "PostRating",
                 table: "Post");
         }
     }

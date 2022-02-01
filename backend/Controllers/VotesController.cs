@@ -10,7 +10,7 @@ using backend.Models;
 
 namespace backend.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/votes")]
     [ApiController]
     public class VotesController : ControllerBase
     {
@@ -78,6 +78,8 @@ namespace backend.Controllers
         [HttpPost]
         public async Task<ActionResult<Vote>> PostVote(Vote vote)
         {
+            var post = await _context.Post.FindAsync(vote.PostFK);
+            post.Rating += vote.Rating - 3;
             _context.Vote.Add(vote);
             await _context.SaveChangesAsync();
 

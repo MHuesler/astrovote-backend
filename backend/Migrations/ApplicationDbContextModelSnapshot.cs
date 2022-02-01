@@ -128,6 +128,9 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Ticker")
                         .IsRequired()
                         .HasColumnType("text");
@@ -138,6 +141,23 @@ namespace backend.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Post");
+                });
+
+            modelBuilder.Entity("backend.Models.Vote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PostFK")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Vote");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
