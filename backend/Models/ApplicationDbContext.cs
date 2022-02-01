@@ -10,5 +10,6 @@ namespace backend.Models
         {
         }
         public DbSet<backend.Models.Post> Post { get; set; }
+        public DbSet<backend.Models.Vote> Vote { get; set; }
     }
 }
