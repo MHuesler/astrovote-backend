@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backend.Models;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace backend.Controllers
 {
@@ -22,6 +24,7 @@ namespace backend.Controllers
         }
 
         // GET: api/Posts
+        [IgnoreAntiforgeryToken]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Post>>> GetPost()
         {
@@ -29,6 +32,7 @@ namespace backend.Controllers
         }
 
         // GET: api/Posts/5
+        [IgnoreAntiforgeryToken]
         [HttpGet("{id}")]
         public async Task<ActionResult<Post>> GetPost(Guid id)
         {
@@ -44,6 +48,7 @@ namespace backend.Controllers
 
         // PUT: api/Posts/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> PutPost(Guid id, Post post)
         {
@@ -75,9 +80,13 @@ namespace backend.Controllers
 
         // POST: api/Posts
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<Post>> PostPost(Post post)
         {
+            var userId = Guid.Parse(User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value);
+            post.Rating = 0;
+            post.UserFK = userId;
             _context.Post.Add(post);
             await _context.SaveChangesAsync();
 
@@ -85,6 +94,7 @@ namespace backend.Controllers
         }
 
         // DELETE: api/Posts/5
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePost(Guid id)
         {

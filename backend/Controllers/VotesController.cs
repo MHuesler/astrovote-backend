@@ -7,9 +7,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using backend.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace backend.Controllers
 {
+    [Authorize]
     [Route("api/v1/votes")]
     [ApiController]
     public class VotesController : ControllerBase
@@ -80,6 +83,10 @@ namespace backend.Controllers
         {
             var post = await _context.Post.FindAsync(vote.PostFK);
             post.Rating += vote.Rating - 3;
+
+            var userId = Guid.Parse(User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value);
+            vote.UserFK = userId;
+
             _context.Vote.Add(vote);
             await _context.SaveChangesAsync();
 
