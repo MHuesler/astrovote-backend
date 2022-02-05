@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using backend.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using backend.Resources;
 
 namespace backend.Controllers
 {
@@ -79,13 +80,27 @@ namespace backend.Controllers
         // POST: api/Votes
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Vote>> PostVote(Vote vote)
+        public async Task<ActionResult<Vote>> PostVote(VoteResource voteResource)
         {
-            var post = await _context.Post.FindAsync(vote.PostFK);
-            post.Rating += vote.Rating - 3;
+            var userName = User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
+            var dbVote = _context.Vote.Where(vote => vote.UserFK == userName && vote.PostFK == voteResource.PostFK).FirstOrDefault();
 
-            var userId = Guid.Parse(User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value);
-            vote.UserFK = userId;
+            if (dbVote != null)
+            {
+                return BadRequest();
+            }
+         
+            var post = await _context.Post.FindAsync(voteResource.PostFK);
+            post.Rating += voteResource.Rating - 3;
+
+            var vote = new Vote()
+            {
+                PostFK = voteResource.PostFK,
+                Rating = voteResource.Rating,
+                UserFK = userName,
+                Created = DateTime.UtcNow,
+                Updated = DateTime.UtcNow
+            };
 
             _context.Vote.Add(vote);
             await _context.SaveChangesAsync();

@@ -128,6 +128,9 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("Rating")
                         .HasColumnType("integer");
 
@@ -135,8 +138,12 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("UserFK")
-                        .HasColumnType("uuid");
+                    b.Property<DateTime>("Updated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserFK")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -149,14 +156,21 @@ namespace backend.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid>("PostFK")
                         .HasColumnType("uuid");
 
                     b.Property<int>("Rating")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("UserFK")
-                        .HasColumnType("uuid");
+                    b.Property<DateTime>("Updated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserFK")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 

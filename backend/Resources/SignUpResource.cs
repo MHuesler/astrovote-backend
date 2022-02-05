@@ -7,7 +7,7 @@ namespace backend.Resources
         [Required(ErrorMessage = "Username is required")]
         public string UserName { get; set; }
 
-        [Required(ErrorMessage = "Full Name is required")]
+        [Required(ErrorMessage = "Display Name is required")]
         public string DisplayName { get; set; }
 
         [EmailAddress]

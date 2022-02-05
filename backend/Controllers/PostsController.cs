@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using backend.Models;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using backend.Resources;
 
 namespace backend.Controllers
 {
@@ -26,9 +27,45 @@ namespace backend.Controllers
         // GET: api/Posts
         [IgnoreAntiforgeryToken]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Post>>> GetPost()
+        public async Task<ActionResult<IEnumerable<dynamic>>> GetPost()
         {
-            return await _context.Post.ToListAsync();
+            var userName = "";
+            bool isAuthenticated = User.Identity.IsAuthenticated;
+            if (isAuthenticated)
+            {
+                userName = User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
+            }
+
+            var posts = await _context.Post.OrderByDescending(post => post.Rating).Take(50).ToListAsync();
+
+            var publicPosts = new List<dynamic>();
+
+            foreach (var post in posts)
+            {
+                var userVote = isAuthenticated ? _context.Vote.Where(vote => vote.UserFK == userName && vote.PostFK == post.Id).FirstOrDefault() : null;
+
+                publicPosts.Add(
+                new
+                {
+                    Id = post.Id,
+                    Ticker = post.Ticker,
+                    Rating = post.Rating,
+                    Analysis = post.Analysis,
+                    UserRating = (userVote != null ? userVote.Rating : 0)
+                });
+                
+            }
+
+            return publicPosts;
+        }
+
+        // GET: api/Posts
+        [Route("api/v1/posts/new")]
+        [IgnoreAntiforgeryToken]
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Post>>> GetPostByNew()
+        {
+            return await _context.Post.OrderBy(post => post.Created).Take(50).ToListAsync();
         }
 
         // GET: api/Posts/5
@@ -82,11 +119,19 @@ namespace backend.Controllers
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [Authorize]
         [HttpPost]
-        public async Task<ActionResult<Post>> PostPost(Post post)
+        public async Task<ActionResult<Post>> PostPost([FromBody]PostResource postResource)
         {
-            var userId = Guid.Parse(User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value);
-            post.Rating = 0;
-            post.UserFK = userId;
+            var userName = User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
+            var post = new Post()
+            {
+                Ticker = postResource.Ticker,
+                Analysis = postResource.Analysis,
+                Rating = 0,
+                UserFK = userName,
+                Created = DateTime.UtcNow,
+                Updated = DateTime.UtcNow,
+            };
+
             _context.Post.Add(post);
             await _context.SaveChangesAsync();
 
