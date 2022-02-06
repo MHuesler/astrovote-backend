@@ -48,15 +48,23 @@ namespace backend.Controllers
 
         // PUT: api/Votes/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutVote(Guid id, Vote vote)
+        [HttpPut("{postId}")]
+        public async Task<IActionResult> PutVote(Guid postId, [FromBody] VoteResource voteResource)
         {
-            if (id != vote.Id)
+            var userName = User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
+
+            var post = await _context.Post.FindAsync(postId);
+
+            var vote = await _context.Vote.Where(vote => vote.UserFK == userName && vote.PostFK == postId).FirstOrDefaultAsync();
+
+            if (vote == null || post == null)
             {
-                return BadRequest();
+                return NotFound();
             }
 
-            _context.Entry(vote).State = EntityState.Modified;
+            post.Rating += voteResource.Rating - vote.Rating;
+            vote.Rating = voteResource.Rating;
+            vote.Updated = DateTime.UtcNow;
 
             try
             {
@@ -64,7 +72,7 @@ namespace backend.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!VoteExists(id))
+                if (!VoteExists(vote.Id))
                 {
                     return NotFound();
                 }
@@ -74,16 +82,16 @@ namespace backend.Controllers
                 }
             }
 
-            return NoContent();
+            return Ok(new { Rating = post.Rating });
         }
 
         // POST: api/Votes
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Vote>> PostVote(VoteResource voteResource)
+        public async Task<ActionResult<Vote>> PostVote([FromBody]VoteResource voteResource)
         {
             var userName = User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
-            var dbVote = _context.Vote.Where(vote => vote.UserFK == userName && vote.PostFK == voteResource.PostFK).FirstOrDefault();
+            var dbVote = await _context.Vote.Where(vote => vote.UserFK == userName && vote.PostFK == voteResource.PostFK).FirstOrDefaultAsync();
 
             if (dbVote != null)
             {
@@ -109,10 +117,12 @@ namespace backend.Controllers
         }
 
         // DELETE: api/Votes/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteVote(Guid id)
+        [HttpDelete("{postId}")]
+        public async Task<IActionResult> DeleteVote(Guid postId)
         {
-            var vote = await _context.Vote.FindAsync(id);
+            var userName = User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
+            var vote = await _context.Vote.Where(vote => vote.UserFK == userName && vote.PostFK == postId).FirstOrDefaultAsync();
+
             if (vote == null)
             {
                 return NotFound();
