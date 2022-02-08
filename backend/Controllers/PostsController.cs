@@ -96,6 +96,43 @@ namespace backend.Controllers
 
         }
 
+        // GET: api/Posts
+        [Route("search")]
+        [IgnoreAntiforgeryToken]
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<dynamic>>> SearchPosts([FromQuery(Name = "q")] string query)
+        {
+            var userName = "";
+            bool isAuthenticated = User.Identity.IsAuthenticated;
+            if (isAuthenticated)
+            {
+                userName = User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
+            }
+
+            var posts = await _context.Post.Where(post => post.Ticker.ToLower().Contains(query.ToLower()) || post.Analysis.ToLower().Contains(query.ToLower())).OrderByDescending(post => post.Created).Take(50).ToListAsync();
+
+            var publicPosts = new List<dynamic>();
+
+            foreach (var post in posts)
+            {
+                var userVote = isAuthenticated ? _context.Vote.Where(vote => vote.UserFK == userName && vote.PostFK == post.Id).FirstOrDefault() : null;
+
+                publicPosts.Add(
+                new
+                {
+                    Id = post.Id,
+                    Ticker = post.Ticker,
+                    Rating = post.Rating,
+                    Analysis = post.Analysis,
+                    UserRating = (userVote != null ? userVote.Rating : 0)
+                });
+
+            }
+
+            return publicPosts;
+
+        }
+
         // GET: api/Posts/5
         [IgnoreAntiforgeryToken]
         [HttpGet("{id}")]
