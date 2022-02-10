@@ -113,7 +113,7 @@ namespace backend.Controllers
             _context.Vote.Add(vote);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetVote", new { id = vote.Id }, vote);
+            return Ok(new { Rating = post.Rating });
         }
 
         // DELETE: api/Votes/5

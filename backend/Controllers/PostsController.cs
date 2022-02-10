@@ -25,9 +25,10 @@ namespace backend.Controllers
         }
 
         // GET: api/Posts
+        [Route("")]
         [IgnoreAntiforgeryToken]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<dynamic>>> GetPost()
+        public async Task<ActionResult<IEnumerable<dynamic>>> GetPost([FromQuery(Name = "sort")] string sort = null)
         {
             var userName = "";
             bool isAuthenticated = User.Identity.IsAuthenticated;
@@ -36,7 +37,14 @@ namespace backend.Controllers
                 userName = User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
             }
 
-            var posts = await _context.Post.OrderByDescending(post => post.Rating).Take(50).ToListAsync();
+            var posts = new List<Post>();
+
+            switch (sort)
+            {
+                case "new": posts = await _context.Post.OrderByDescending(post => post.Created).Take(50).ToListAsync(); break;
+                default: posts = await _context.Post.OrderByDescending(post => post.Rating).Take(50).ToListAsync(); break;
+            }
+
 
             var publicPosts = new List<dynamic>();
 
@@ -60,47 +68,10 @@ namespace backend.Controllers
         }
 
         // GET: api/Posts
-        [Route("new")]
-        [IgnoreAntiforgeryToken]
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<dynamic>>> GetPostByNew()
-        {
-            var userName = "";
-            bool isAuthenticated = User.Identity.IsAuthenticated;
-            if (isAuthenticated)
-            {
-                userName = User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
-            }
-
-            var posts = await _context.Post.OrderByDescending(post => post.Created).Take(50).ToListAsync();
-
-            var publicPosts = new List<dynamic>();
-
-            foreach (var post in posts)
-            {
-                var userVote = isAuthenticated ? _context.Vote.Where(vote => vote.UserFK == userName && vote.PostFK == post.Id).FirstOrDefault() : null;
-
-                publicPosts.Add(
-                new
-                {
-                    Id = post.Id,
-                    Ticker = post.Ticker,
-                    Rating = post.Rating,
-                    Analysis = post.Analysis,
-                    UserRating = (userVote != null ? userVote.Rating : 0)
-                });
-
-            }
-
-            return publicPosts;
-
-        }
-
-        // GET: api/Posts
         [Route("search")]
         [IgnoreAntiforgeryToken]
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<dynamic>>> SearchPosts([FromQuery(Name = "q")] string query)
+        public async Task<ActionResult<IEnumerable<dynamic>>> SearchPosts([FromQuery(Name = "q")] string query, [FromQuery(Name = "sort")] string sort = null)
         {
             var userName = "";
             bool isAuthenticated = User.Identity.IsAuthenticated;
@@ -109,7 +80,13 @@ namespace backend.Controllers
                 userName = User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
             }
 
-            var posts = await _context.Post.Where(post => post.Ticker.ToLower().Contains(query.ToLower()) || post.Analysis.ToLower().Contains(query.ToLower())).OrderByDescending(post => post.Created).Take(50).ToListAsync();
+            var posts = new List<Post>();
+
+            switch (sort)
+            {
+                case "new": posts = await _context.Post.Where(post => post.Ticker.ToLower().Contains(query.ToLower()) || post.Analysis.ToLower().Contains(query.ToLower())).OrderByDescending(post => post.Created).Take(50).ToListAsync(); break;
+                default: posts = await _context.Post.Where(post => post.Ticker.ToLower().Contains(query.ToLower()) || post.Analysis.ToLower().Contains(query.ToLower())).OrderByDescending(post => post.Rating).Take(50).ToListAsync(); break;
+            }
 
             var publicPosts = new List<dynamic>();
 
